@@ -13,25 +13,87 @@ const server = new McpServer({
 });
 
 // Alertmanagerとの通信用ヘルパー関数
-async function fetchFromAlertmanager(path: string, options = {}) {
+async function fetchFromAlertmanager(path: string, options: RequestInit = {}): Promise<any> {
   const baseUrl = process.env.ALERTMANAGER_URL || DEFAULT_ALERTMANAGER_URL;
   const url = `${baseUrl}/api/v2/${path}`;
   
   try {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), DEFAULT_TIMEOUT);
+    
     const response = await fetch(url, {
-      timeout: DEFAULT_TIMEOUT,
-      ...options
+      ...options,
+      signal: controller.signal
     });
+    
+    clearTimeout(timeoutId);
     
     if (!response.ok) {
       throw new Error(`Alertmanager API error: ${response.status} ${response.statusText}`);
     }
     
     return await response.json();
-  } catch (error) {
-    console.error(`Error fetching from Alertmanager: ${error.message}`);
+  } catch (error: unknown) {
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    console.error(`Error fetching from Alertmanager: ${errorMessage}`);
     throw error;
   }
+}
+
+// アラート関連の型定義
+interface AlertLabel {
+  [key: string]: string;
+}
+
+interface AlertAnnotation {
+  [key: string]: string;
+}
+
+interface AlertStatus {
+  state: string;
+  silencedBy: string[];
+  inhibitedBy: string[];
+}
+
+interface Alert {
+  fingerprint: string;
+  status: AlertStatus;
+  labels: AlertLabel;
+  annotations: AlertAnnotation;
+  startsAt: string;
+  endsAt: string;
+  generatorURL: string;
+}
+
+interface FormattedAlert {
+  fingerprint: string;
+  alertname: string;
+  severity: string;
+  summary: string;
+  description: string;
+  startsAt: string;
+  status: {
+    state: string;
+    silenced: boolean;
+    inhibited: boolean;
+  };
+  labels: AlertLabel;
+}
+
+interface Silence {
+  id: string;
+  status: {
+    state: string;
+  };
+  createdBy: string;
+  comment: string;
+  startsAt: string;
+  endsAt: string;
+  matchers: Array<{
+    name: string;
+    value: string;
+    isRegex: boolean;
+  }>;
 }
 
 // 現在のアラート一覧を取得するツール
@@ -55,10 +117,10 @@ server.tool(
       // アラートの取得
       const queryString = params.toString();
       const path = `alerts${queryString ? '?' + queryString : ''}`;
-      const alerts = await fetchFromAlertmanager(path);
+      const alerts = await fetchFromAlertmanager(path) as Alert[];
       
       // アラートの整形
-      const formattedAlerts = alerts.map(alert => ({
+      const formattedAlerts = alerts.map((alert: Alert): FormattedAlert => ({
         fingerprint: alert.fingerprint,
         alertname: alert.labels.alertname,
         severity: alert.labels.severity || 'unknown',
@@ -79,11 +141,12 @@ server.tool(
           text: JSON.stringify(formattedAlerts, null, 2)
         }]
       };
-    } catch (error) {
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : String(error);
       return {
         content: [{
           type: "text",
-          text: `Error fetching alerts: ${error.message}`
+          text: `Error fetching alerts: ${errorMessage}`
         }],
         isError: true
       };
@@ -100,10 +163,10 @@ server.tool(
   async ({ fingerprint }) => {
     try {
       // アラート一覧を取得
-      const alerts = await fetchFromAlertmanager('alerts');
+      const alerts = await fetchFromAlertmanager('alerts') as Alert[];
       
       // フィンガープリントに一致するアラートを検索
-      const alert = alerts.find(a => a.fingerprint === fingerprint);
+      const alert = alerts.find((a: Alert) => a.fingerprint === fingerprint);
       
       if (!alert) {
         return {
@@ -133,11 +196,12 @@ server.tool(
           text: JSON.stringify(details, null, 2)
         }]
       };
-    } catch (error) {
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : String(error);
       return {
         content: [{
           type: "text",
-          text: `Error fetching alert details: ${error.message}`
+          text: `Error fetching alert details: ${errorMessage}`
         }],
         isError: true
       };
@@ -190,11 +254,12 @@ server.tool(
           text: `Successfully created silence with ID: ${response.silenceID}`
         }]
       };
-    } catch (error) {
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : String(error);
       return {
         content: [{
           type: "text",
-          text: `Error creating silence: ${error.message}`
+          text: `Error creating silence: ${errorMessage}`
         }],
         isError: true
       };
@@ -217,10 +282,10 @@ server.tool(
       // サイレンスの取得
       const queryString = params.toString();
       const path = `silences${queryString ? '?' + queryString : ''}`;
-      const silences = await fetchFromAlertmanager(path);
+      const silences = await fetchFromAlertmanager(path) as Silence[];
       
       // サイレンスの整形
-      const formattedSilences = silences.map(silence => ({
+      const formattedSilences = silences.map((silence: Silence) => ({
         id: silence.id,
         status: silence.status.state,
         createdBy: silence.createdBy,
@@ -236,11 +301,12 @@ server.tool(
           text: JSON.stringify(formattedSilences, null, 2)
         }]
       };
-    } catch (error) {
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : String(error);
       return {
         content: [{
           type: "text",
-          text: `Error fetching silences: ${error.message}`
+          text: `Error fetching silences: ${errorMessage}`
         }],
         isError: true
       };
@@ -267,11 +333,12 @@ server.tool(
           text: `Successfully deleted silence with ID: ${silenceId}`
         }]
       };
-    } catch (error) {
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : String(error);
       return {
         content: [{
           type: "text",
-          text: `Error deleting silence: ${error.message}`
+          text: `Error deleting silence: ${errorMessage}`
         }],
         isError: true
       };
@@ -306,11 +373,12 @@ server.tool(
           text: JSON.stringify(groups, null, 2)
         }]
       };
-    } catch (error) {
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : String(error);
       return {
         content: [{
           type: "text",
-          text: `Error fetching alert groups: ${error.message}`
+          text: `Error fetching alert groups: ${errorMessage}`
         }],
         isError: true
       };
@@ -325,7 +393,8 @@ async function main() {
   console.error("Alertmanager MCP Server started on stdio");
 }
 
-main().catch((error) => {
-  console.error("Fatal error in main():", error);
+main().catch((error: unknown) => {
+  const errorMessage = error instanceof Error ? error.message : String(error);
+  console.error("Fatal error in main():", errorMessage);
   process.exit(1);
 });
