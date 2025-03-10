@@ -1,0 +1,47 @@
+# 依存関係
+node_modules/
+npm-debug.log
+yarn-debug.log
+yarn-error.log
+
+# ビルド成果物
+/build/
+/dist/
+/out/
+*.tsbuildinfo
+
+# TypeScript関連
+*.js.map
+
+# 環境設定
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# エディタ設定
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS関連ファイル
+.DS_Store
+Thumbs.db
+
+# ログ
+logs/
+*.log
+
+# テスト関連
+/coverage/
+
+# その他
+.cache/
+.tmp/
+temp/
+
+# Prometheusアラートマネージャー関連の一時ファイル
+alerts-backup/
