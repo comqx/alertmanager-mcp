@@ -1,0 +1,23 @@
+# sources without build artifacts
+src/
+tsconfig.json
+
+# dev
+.vscode/
+.idea/
+.git/
+.github/
+.gitignore
+.prettierrc
+.eslintrc
+
+# tests
+tests/
+*.test.ts
+*.spec.ts
+
+# others
+node_modules/
+npm-debug.log
+yarn-debug.log
+yarn-error.log
