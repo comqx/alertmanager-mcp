@@ -1,11 +1,19 @@
 {
   "name": "alertmanager-mcp",
+  "keywords": [],
   "version": "1.0.0",
   "main": "index.js",
-  "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+  "type": "module",
+  "bin": {
+    "alertmanager-mcp": "./build/index.js"
   },
-  "keywords": [],
+  "scripts": {
+    "build": "tsc && node -e \"require('fs').chmodSync('build/index.js', '755')\"",
+    "start": "node build/index.js"
+  },
+  "files": [
+    "build"
+  ],
   "author": "",
   "license": "ISC",
   "description": "",
