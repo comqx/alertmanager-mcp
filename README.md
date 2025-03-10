@@ -24,27 +24,23 @@ This project implements a [Model Context Protocol (MCP)](https://modelcontextpro
 
 ### Prerequisites
 
-- [Node.js](https://nodejs.org/) (v18 or newer)
-- [npm](https://www.npmjs.com/)
 - Access to a running [Prometheus Alertmanager](https://prometheus.io/docs/alerting/latest/configuration/) instance
+- For Claude for Desktop: [Node.js](https://nodejs.org/) (v18 or newer) installed on your system
 
-### Setup Steps
+### Setup
 
-1. Clone the repository:
-   ```bash
-   git clone https://github.com/yourusername/alertmanager-mcp.git
-   cd alertmanager-mcp
-   ```
+The package is available on npm and can be used directly with npx:
 
-2. Install dependencies:
-   ```bash
-   npm install
-   ```
+```bash
+npx alertmanager-mcp
+```
 
-3. Build the project:
-   ```bash
-   npm run build
-   ```
+For global installation:
+
+```bash
+npm install -g alertmanager-mcp
+alertmanager-mcp
+```
 
 ## Usage with Claude for Desktop
 
@@ -53,9 +49,10 @@ This project implements a [Model Context Protocol (MCP)](https://modelcontextpro
    {
      "mcpServers": {
        "alertmanager": {
-         "command": "node",
+         "command": "npx",
          "args": [
-           "/absolute/path/to/alertmanager-mcp/build/index.js"
+           "-y",
+           "alertmanager-mcp"
          ],
          "env": {
            "ALERTMANAGER_URL": "http://your-alertmanager-url:9093"
