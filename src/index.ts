@@ -2,17 +2,17 @@ import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 import { z } from "zod";
 
-// 基本的な設定
+// Basic configuration
 const DEFAULT_ALERTMANAGER_URL = "http://localhost:9093";
 const DEFAULT_TIMEOUT = 10000; // 10 seconds
 
-// サーバーインスタンスの作成
+// Create server instance
 const server = new McpServer({
   name: "alertmanager",
   version: "1.0.0",
 });
 
-// Alertmanagerとの通信用ヘルパー関数
+// Helper function for Alertmanager communication
 async function fetchFromAlertmanager(path: string, options: RequestInit = {}): Promise<any> {
   const baseUrl = process.env.ALERTMANAGER_URL || DEFAULT_ALERTMANAGER_URL;
   const url = `${baseUrl}/api/v2/${path}`;
@@ -40,7 +40,7 @@ async function fetchFromAlertmanager(path: string, options: RequestInit = {}): P
   }
 }
 
-// アラート関連の型定義
+// Alert-related type definitions
 interface AlertLabel {
   [key: string]: string;
 }
@@ -96,30 +96,30 @@ interface Silence {
   }>;
 }
 
-// 現在のアラート一覧を取得するツール
+// Tool to retrieve current list of alerts
 server.tool(
   "get-alerts",
   {
-    filter: z.string().optional().describe("フィルタリングクエリ（例: alertname=~'.*CPU.*'）"),
-    silenced: z.boolean().optional().describe("サイレンス中のアラートも含めるか"),
-    inhibited: z.boolean().optional().describe("抑制中のアラートも含めるか"),
-    active: z.boolean().optional().describe("アクティブなアラートを含めるか（デフォルト: true）"),
+    filter: z.string().optional().describe("Filtering query (e.g. alertname=~'.*CPU.*')"),
+    silenced: z.boolean().optional().describe("Include silenced alerts"),
+    inhibited: z.boolean().optional().describe("Include inhibited alerts"),
+    active: z.boolean().optional().describe("Include active alerts (default: true)"),
   },
   async ({ filter, silenced = false, inhibited = false, active = true }) => {
     try {
-      // クエリパラメータの構築
+      // Build query parameters
       const params = new URLSearchParams();
       if (filter) params.append("filter", filter);
       if (silenced) params.append("silenced", "true");
       if (inhibited) params.append("inhibited", "true");
       if (!active) params.append("active", "false");
       
-      // アラートの取得
+      // Fetch alerts
       const queryString = params.toString();
       const path = `alerts${queryString ? '?' + queryString : ''}`;
       const alerts = await fetchFromAlertmanager(path) as Alert[];
       
-      // アラートの整形
+      // Format alerts
       const formattedAlerts = alerts.map((alert: Alert): FormattedAlert => ({
         fingerprint: alert.fingerprint,
         alertname: alert.labels.alertname,
@@ -154,18 +154,18 @@ server.tool(
   }
 );
 
-// 特定のアラートの詳細情報を取得するツール
+// Tool to get detailed information about a specific alert
 server.tool(
   "get-alert-details",
   {
-    fingerprint: z.string().describe("アラートのフィンガープリント"),
+    fingerprint: z.string().describe("Alert fingerprint"),
   },
   async ({ fingerprint }) => {
     try {
-      // アラート一覧を取得
+      // Fetch alert list
       const alerts = await fetchFromAlertmanager('alerts') as Alert[];
       
-      // フィンガープリントに一致するアラートを検索
+      // Find the alert matching the fingerprint
       const alert = alerts.find((a: Alert) => a.fingerprint === fingerprint);
       
       if (!alert) {
@@ -178,7 +178,7 @@ server.tool(
         };
       }
       
-      // アラートの詳細情報を整形
+      // Format the detailed alert information
       const details = {
         fingerprint: alert.fingerprint,
         alertname: alert.labels.alertname,
@@ -209,23 +209,23 @@ server.tool(
   }
 );
 
-// アラートのサイレンスを作成するツール
+// Tool to create a silence for alerts
 server.tool(
   "create-silence",
   {
     matchers: z.array(z.object({
-      name: z.string().describe("マッチャーの名前（例: alertname）"),
-      value: z.string().describe("マッチャーの値（例: HighCPULoad）"),
-      isRegex: z.boolean().optional().describe("正規表現を使用するか"),
-    })).describe("アラートにマッチするマッチャーのリスト"),
-    startsAt: z.string().optional().describe("サイレンス開始時間（ISO8601形式、デフォルトは現在時刻）"),
-    endsAt: z.string().describe("サイレンス終了時間（ISO8601形式）"),
-    createdBy: z.string().describe("サイレンスを作成したユーザー名"),
-    comment: z.string().describe("サイレンスの理由や説明"),
+      name: z.string().describe("Matcher name (e.g. alertname)"),
+      value: z.string().describe("Matcher value (e.g. HighCPULoad)"),
+      isRegex: z.boolean().optional().describe("Use regex matching"),
+    })).describe("List of matchers for alerts"),
+    startsAt: z.string().optional().describe("Silence start time (ISO8601 format, default is current time)"),
+    endsAt: z.string().describe("Silence end time (ISO8601 format)"),
+    createdBy: z.string().describe("Username who created the silence"),
+    comment: z.string().describe("Reason or explanation for the silence"),
   },
   async ({ matchers, startsAt, endsAt, createdBy, comment }) => {
     try {
-      // サイレンスデータの準備
+      // Prepare silence data
       const now = new Date().toISOString();
       const silenceData = {
         matchers: matchers.map(m => ({
@@ -239,7 +239,7 @@ server.tool(
         comment,
       };
       
-      // サイレンスの作成
+      // Create the silence
       const response = await fetchFromAlertmanager('silences', {
         method: 'POST',
         headers: {
@@ -267,24 +267,24 @@ server.tool(
   }
 );
 
-// サイレンス一覧を取得するツール
+// Tool to get list of silences
 server.tool(
   "get-silences",
   {
-    filter: z.string().optional().describe("フィルタリングクエリ（例: createdBy=~'.*admin.*'）"),
+    filter: z.string().optional().describe("Filtering query (e.g. createdBy=~'.*admin.*')"),
   },
   async ({ filter }) => {
     try {
-      // クエリパラメータの構築
+      // Build query parameters
       const params = new URLSearchParams();
       if (filter) params.append("filter", filter);
       
-      // サイレンスの取得
+      // Fetch silences
       const queryString = params.toString();
       const path = `silences${queryString ? '?' + queryString : ''}`;
       const silences = await fetchFromAlertmanager(path) as Silence[];
       
-      // サイレンスの整形
+      // Format silences
       const formattedSilences = silences.map((silence: Silence) => ({
         id: silence.id,
         status: silence.status.state,
@@ -314,15 +314,15 @@ server.tool(
   }
 );
 
-// サイレンスを削除するツール
+// Tool to delete a silence
 server.tool(
   "delete-silence",
   {
-    silenceId: z.string().describe("削除するサイレンスのID"),
+    silenceId: z.string().describe("ID of the silence to delete"),
   },
   async ({ silenceId }) => {
     try {
-      // サイレンスの削除
+      // Delete the silence
       await fetchFromAlertmanager(`silence/${silenceId}`, {
         method: 'DELETE',
       });
@@ -346,23 +346,23 @@ server.tool(
   }
 );
 
-// アラートグループを取得するツール
+// Tool to get alert groups
 server.tool(
   "get-alert-groups",
   {
-    active: z.boolean().optional().describe("アクティブなアラートを含めるか（デフォルト: true）"),
-    silenced: z.boolean().optional().describe("サイレンス中のアラートも含めるか"),
-    inhibited: z.boolean().optional().describe("抑制中のアラートも含めるか"),
+    active: z.boolean().optional().describe("Include active alerts (default: true)"),
+    silenced: z.boolean().optional().describe("Include silenced alerts"),
+    inhibited: z.boolean().optional().describe("Include inhibited alerts"),
   },
   async ({ active = true, silenced = false, inhibited = false }) => {
     try {
-      // クエリパラメータの構築
+      // Build query parameters
       const params = new URLSearchParams();
       if (!active) params.append("active", "false");
       if (silenced) params.append("silenced", "true");
       if (inhibited) params.append("inhibited", "true");
       
-      // アラートグループの取得
+      // Fetch alert groups
       const queryString = params.toString();
       const path = `alerts/groups${queryString ? '?' + queryString : ''}`;
       const groups = await fetchFromAlertmanager(path);
@@ -386,7 +386,7 @@ server.tool(
   }
 );
 
-// メイン処理
+// Main process
 async function main() {
   const transport = new StdioServerTransport();
   await server.connect(transport);
