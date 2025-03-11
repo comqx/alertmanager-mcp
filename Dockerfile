@@ -1,21 +1,37 @@
 # Base image: Node.js 18 (LTS) Alpine for a small footprint
+FROM node:18-alpine AS builder
+
+# Set working directory
+WORKDIR /app
+
+# Copy package files and install all dependencies (including dev dependencies)
+COPY package.json package-lock.json* ./
+RUN npm ci
+
+# Copy source code
+COPY src/ ./src/
+COPY tsconfig.json ./
+
+# Build the application
+RUN npm run build
+
+# Create production image
 FROM node:18-alpine
 
 # Set working directory
 WORKDIR /app
 
-# Install dependencies first (for better caching)
+# Copy package files
 COPY package.json package-lock.json* ./
+
+# Install only production dependencies
 RUN npm ci --only=production
 
-# Copy source code
-COPY build/ ./build/
+# Copy built application from builder stage
+COPY --from=builder /app/build ./build
 
 # Set environment variables
 ENV NODE_ENV=production
-
-# Expose port if needed (not required for MCP stdio connections)
-# EXPOSE 3000
 
 # Set entrypoint
 ENTRYPOINT ["node", "build/index.js"]
