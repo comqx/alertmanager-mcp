@@ -79,12 +79,11 @@ jobs:
           exit-code: 1
           failure-threshold: fatal
           report-format: sarif
-          report-name: dockle-results.sarif
 
       - name: Upload Dockle scan results
         uses: github/codeql-action/upload-sarif@v3
         with:
-          sarif_file: reports/dockle-results.sarif
+          sarif_file: dockle-report.sarif
           category: dockle
 
       - name: Push Docker image
