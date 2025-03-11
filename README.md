@@ -46,20 +46,22 @@ alertmanager-mcp
 
 1. Configure Claude for Desktop to use the MCP server by editing the configuration file:
    ```json
-   {
-     "mcpServers": {
-       "alertmanager": {
-         "command": "npx",
-         "args": [
-           "-y",
-           "alertmanager-mcp"
-         ],
-         "env": {
-           "ALERTMANAGER_URL": "http://your-alertmanager-url:9093"
-         }
-       }
-     }
-   }
+  {
+    "mcpServers": {
+      "alertmanager": {
+        "command": "docker",
+        "args": [
+          "run",
+          "--rm",
+          "-i",
+          "--network=host",
+          "-e", "ALERTMANAGER_URL=http://your-alertmanager-url:9093",
+          "ghcr.io/kaznak/alertmanager-mcp:latest"
+        ],
+        "env": {}
+      }
+    }
+  }
    ```
 
 2. Restart Claude for Desktop to load the new configuration.
