@@ -8,7 +8,7 @@ on:
       tag:
         description: 'Git tag to build from'
         required: false
-        default: ''
+        default: 'main'
 
 env:
   REGISTRY: ghcr.io
