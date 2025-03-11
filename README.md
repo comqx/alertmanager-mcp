@@ -45,7 +45,7 @@ alertmanager-mcp
 ## Usage with Claude for Desktop
 
 1. Configure Claude for Desktop to use the MCP server by editing the configuration file:
-   ```json
+  ```json
   {
     "mcpServers": {
       "alertmanager": {
@@ -62,7 +62,7 @@ alertmanager-mcp
       }
     }
   }
-   ```
+  ```
 
 2. Restart Claude for Desktop to load the new configuration.
 
