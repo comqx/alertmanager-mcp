@@ -84,7 +84,7 @@ jobs:
       - name: Upload Dockle scan results
         uses: github/codeql-action/upload-sarif@v3
         with:
-          sarif_file: dockle-results.sarif
+          sarif_file: reports/dockle-results.sarif
           category: dockle
 
       - name: Push Docker image
