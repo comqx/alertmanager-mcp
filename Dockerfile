@@ -33,5 +33,11 @@ COPY --from=builder /app/build ./build
 # Set environment variables
 ENV NODE_ENV=production
 
+# Change ownership of the application files to 'node' user
+RUN chown -R node:node /app
+
+# Switch to non-root user
+USER node
+
 # Set entrypoint
 ENTRYPOINT ["node", "build/index.js"]
