@@ -72,7 +72,7 @@ jobs:
           context: .
           push: false
           load: true
-          tags: alertmanager-mcp:test
+          tags: ${{ env.IMAGE_NAME }}:test
           labels: ${{ steps.meta.outputs.labels }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
@@ -80,7 +80,7 @@ jobs:
       - name: Scan image with Dockle
         uses: erzz/dockle-action@v1
         with:
-          image: alertmanager-mcp:test
+          image: ${{ env.IMAGE_NAME }}:test
           exit-code: 1
           failure-threshold: fatal
           report-format: sarif
