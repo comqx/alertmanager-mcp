@@ -1,5 +1,7 @@
 # Prometheus Alertmanager MCP Server
 
+[![smithery badge](https://smithery.ai/badge/@comqx/alertmanager-mcp)](https://smithery.ai/server/@comqx/alertmanager-mcp)
+
 This project implements a [Model Context Protocol (MCP)](https://modelcontextprotocol.io/) server that integrates with [Prometheus Alertmanager](https://prometheus.io/docs/alerting/latest/alertmanager/). It serves as a bridge between [Claude AI](https://claude.ai/) and Alertmanager, allowing Claude to interact with and manage alerts through a standardized interface.
 
 ## Core Features
@@ -21,6 +23,14 @@ This project implements a [Model Context Protocol (MCP)](https://modelcontextpro
 - Provides strongly-typed interfaces for alert and silence data
 
 ## Installation
+
+### Installing via Smithery
+
+To install Prometheus Alertmanager Integration Server for Claude Desktop automatically via [Smithery](https://smithery.ai/server/@comqx/alertmanager-mcp):
+
+```bash
+npx -y @smithery/cli install @comqx/alertmanager-mcp --client claude
+```
 
 ### Prerequisites
 
